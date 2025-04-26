@@ -28,7 +28,7 @@ export default class Carousel {
     this.#slides.forEach((slideData, index) => {
       const slideTemplate = `
         <div class="carousel__slide" data-index="${index}">
-          <img class="carousel__img" src="${slideData.image}" alt="${slideData.title}"/>
+          <img class="carousel__img" src="../../assets/images/carousel/${slideData.image}" alt="${slideData.title}"/>
           <button class="carousel__button" data-slide-id="${slideData.id}">Купить</button>
         </div>
       `;
