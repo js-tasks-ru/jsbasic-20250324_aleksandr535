@@ -10,37 +10,26 @@ export default class StepSlider {
   }
 
   renderDOM() {
-    const sliderRoot = document.createElement('div');
-    sliderRoot.classList.add('slider');
+    // Создаем основную структуру с помощью innerHTML
+    this.elem = document.createElement('div');
+    this.elem.innerHTML = `
+      <div class="slider">
+        <div class="slider__thumb">
+          <span class="slider__value">${this.config.value}</span>
+        </div>
+        <div class="slider__progress"></div>
+        <div class="slider__steps">
+          ${Array.from({ length: this.config.steps }).map((_, index) =>
+            `<span class="${index === this.config.value ? 'slider__step-active' : ''}"></span>`
+          ).join('')}
+        </div>
+      </div>
+    `;
 
-    // Ползунок с цифрой
-    const thumb = document.createElement('div');
-    thumb.classList.add('slider__thumb');
-    const valueLabel = document.createElement('span');
-    valueLabel.classList.add('slider__value');
-    valueLabel.textContent = this.config.value.toString();
-    thumb.appendChild(valueLabel);
+    // Сохраняем основной элемент
+    this.elem = this.elem.firstElementChild;
 
-    // Закрашиваемая область
-    const progress = document.createElement('div');
-    progress.classList.add('slider__progress');
-
-    // Контейнер шагов
-    const stepsContainer = document.createElement('div');
-    stepsContainer.classList.add('slider__steps');
-
-    // Рисуем шаги
-    for (let i = 0; i < this.config.steps; i++) {
-      const stepMarker = document.createElement('span');
-      if (i === this.config.value) stepMarker.classList.add('slider__step-active');
-      stepsContainer.appendChild(stepMarker);
-    }
-
-    // Собираем элементы
-    sliderRoot.append(thumb, progress, stepsContainer);
-    this.elem = sliderRoot;
-
-    // Привязываем обработчики событий
+    // Присоединение обработчиков событий
     this.attachEventListeners();
   }
 
@@ -56,8 +45,8 @@ export default class StepSlider {
       this.elem.classList.add('slider_dragging');
 
       // Начало перетаскивания
-      document.addEventListener('pointermove', this.onPointerMove.bind(this));
-      document.addEventListener('pointerup', this.onPointerUp.bind(this));
+      document.addEventListener('pointermove', this.onPointerMove);
+      document.addEventListener('pointerup', this.onPointerUp);
     });
 
     // Щёлкнули по слайдеру (не по ползунку)
@@ -73,7 +62,8 @@ export default class StepSlider {
     });
   }
 
-  onPointerMove(event) {
+  // Переписал как стрелочную функцию
+  onPointerMove = (event) => {
     event.preventDefault();
 
     const rect = this.elem.getBoundingClientRect();
@@ -108,9 +98,10 @@ export default class StepSlider {
       detail: this.config.value,
       bubbles: true
     }));
-  }
+  };
 
-  onPointerUp(event) {
+  // Переписал как стрелочную функцию
+  onPointerUp = (event) => {
     event.preventDefault();
 
     // Получаем последнюю позицию
@@ -126,8 +117,8 @@ export default class StepSlider {
     this.setValue(newValue);
 
     // Убираем обработчики движения и завершения
-    document.removeEventListener('pointermove', this.onPointerMove.bind(this));
-    document.removeEventListener('pointerup', this.onPointerUp.bind(this));
+    document.removeEventListener('pointermove', this.onPointerMove);
+    document.removeEventListener('pointerup', this.onPointerUp);
 
     // Возвращаем класс в исходное состояние
     this.elem.classList.remove('slider_dragging');
@@ -137,7 +128,7 @@ export default class StepSlider {
       detail: this.config.value,
       bubbles: true
     }));
-  }
+  };
 
   setValue(newValue) {
     if (newValue !== this.config.value) {

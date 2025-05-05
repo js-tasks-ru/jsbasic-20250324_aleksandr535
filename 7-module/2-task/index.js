@@ -37,9 +37,17 @@ export default class Modal {
             this.isOpen = true;
         }
     }
+    // Вынес проверку наличия класса is-modal-open в отдельную функцию
+    _isModalOpen() {
+        return (
+            this.modalElement &&
+            document.body.contains(this.modalElement) &&
+            document.body.classList.contains("is-modal-open")
+        );
+    }
 
     close() {
-        if (this.isOpen) {
+        if (this._isModalOpen()) {
             document.body.removeChild(this.modalElement);
             document.body.classList.remove("is-modal-open");
             this._removeEventListeners();
@@ -55,7 +63,7 @@ export default class Modal {
     }
 
     setBody(node) {
-        this.bodyBuffer = node; // Сохраняем тело в буфер
+        this.tempBodyNode = node; // Переименовал переменную tempBodyNode для улучшения понимания её назначения
         if (this.isOpen) {
             this._updateBody(); // Если окно открыто, применяем немедленно
         }
@@ -74,13 +82,12 @@ export default class Modal {
         if (this.modalElement) {
             const bodyInnerElement = this.modalElement.querySelector('.modal__body-inner');
             if (bodyInnerElement) {
-                while (bodyInnerElement.firstChild) {
-                    bodyInnerElement.removeChild(bodyInnerElement.firstChild);
-                }
-                if (this.bodyBuffer instanceof Node) {
-                    bodyInnerElement.appendChild(this.bodyBuffer.cloneNode(true));
-                } else if (typeof this.bodyBuffer === 'string') {
-                    bodyInnerElement.innerHTML = this.bodyBuffer;
+                bodyInnerElement.innerHTML = ''; // Упрощено удаление содержимого элемента
+
+                if (this.tempBodyNode instanceof Node) {
+                    bodyInnerElement.append(this.tempBodyNode); // Используем append без cloneNode()
+                } else if (typeof this.tempBodyNode === 'string') {
+                    bodyInnerElement.innerHTML = this.tempBodyNode;
                 }
             }
         }
