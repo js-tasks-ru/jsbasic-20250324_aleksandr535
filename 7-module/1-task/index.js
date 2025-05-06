@@ -4,6 +4,7 @@ export default class RibbonMenu {
   constructor(categories) {
     this.categories = categories;
     this.elem = this.createRibbon();
+    this.setupScrollHandlers(); // здесь ставим стрелки в правильное состояние
   }
 
   createRibbon() {
@@ -35,7 +36,7 @@ export default class RibbonMenu {
     ribbon.appendChild(ribbonInner);
 
     // Добавляем стрелки для прокрутки
-    const leftArrow = createElement('<button class="ribbon__arrow ribbon__arrow_left"><img src="/assets/images/icons/angle-left-icon.svg" alt="previous" /></button>');
+    const leftArrow = createElement('<button class="ribbon__arrow ribbon__arrow_left"><img src="/assets/images/icons/angle-icon.svg" alt="previous" /></button>');
     leftArrow.addEventListener('click', () => this.scrollLeft());
 
     const rightArrow = createElement('<button class="ribbon__arrow ribbon__arrow_right"><img src="/assets/images/icons/angle-icon.svg" alt="next" /></button>');
@@ -47,38 +48,19 @@ export default class RibbonMenu {
     return ribbon;
   }
 
-  //Прокручивает ленту на 350px влево
+  // Прокручивает ленту на 350px влево
   scrollLeft() {
     const ribbonInner = this.elem.querySelector('.ribbon__inner');
     ribbonInner.scrollBy(-350, 0);
   }
 
-  //Прокручивает ленту на 350px вправо
+  // Прокручивает ленту на 350px вправо
   scrollRight() {
     const ribbonInner = this.elem.querySelector('.ribbon__inner');
     ribbonInner.scrollBy(350, 0);
   }
 
-  selectCategory(link) {
-    // Удаляем активность у предыдущих элементов
-    const activeItem = this.elem.querySelector('.ribbon__item_active');
-    if (activeItem) {
-      activeItem.classList.remove('ribbon__item_active');
-    }
-
-    // Активируем новую категорию
-    link.classList.add('ribbon__item_active');
-
-    // Генерируем событие выбора категории
-    const selectedCategoryID = link.dataset.id;
-    const event = new CustomEvent('ribbon-select', {
-      detail: selectedCategoryID,
-      bubbles: true
-    });
-    this.elem.dispatchEvent(event);
-  }
-
-  //Устанавливает обработчики прокрутки и скрытия кнопок
+  // Устанавливает обработчики прокрутки и скрытия кнопок
   setupScrollHandlers() {
     const ribbonInner = this.elem.querySelector('.ribbon__inner');
     const leftArrow = this.elem.querySelector('.ribbon__arrow_left');
@@ -88,35 +70,31 @@ export default class RibbonMenu {
       this.handleScrollStateChange(leftArrow, rightArrow, ribbonInner);
     });
 
-    // Сразу проверяем положение прокрутки
-    this.handleScrollStateChange(leftArrow, rightArrow, ribbonInner);
+    // Изначально проверяем состояние стрелок
+    setTimeout(() => {
+      this.handleScrollStateChange(leftArrow, rightArrow, ribbonInner);
+    }, 0);
   }
 
-  /**
-   * Проверяет текущее состояние прокрутки и управляет видимостью стрелок
-   *
-   * @param {HTMLElement} leftArrow Кнопка прокрутки влево
-   * @param {HTMLElement} rightArrow Кнопка прокрутки вправо
-   * @param {HTMLElement} ribbonInner Внутренняя лента меню
-   */
+  // Обновляет видимость стрелок прокрутки
   handleScrollStateChange(leftArrow, rightArrow, ribbonInner) {
     const scrollLeft = ribbonInner.scrollLeft;
     const scrollWidth = ribbonInner.scrollWidth;
     const clientWidth = ribbonInner.clientWidth;
     const scrollRight = scrollWidth - scrollLeft - clientWidth;
 
-    // Скрыть стрелку назад, если находимся в самом начале
-    if (scrollLeft > 0 && !leftArrow.classList.contains('ribbon__arrow_visible')) {
+    // Показываем стрелку "Назад", если доступна прокрутка влево
+    if (scrollLeft > 0) {
       leftArrow.classList.add('ribbon__arrow_visible');
-    } else if (scrollLeft === 0 && leftArrow.classList.contains('ribbon__arrow_visible')) {
+    } else {
       leftArrow.classList.remove('ribbon__arrow_visible');
     }
 
-    // Скрыть стрелку вперёд, если дошли до конца ленты
-    if (scrollRight < 1 && rightArrow.classList.contains('ribbon__arrow_visible')) {
-      rightArrow.classList.remove('ribbon__arrow_visible');
-    } else if (scrollRight > 0 && !rightArrow.classList.contains('ribbon__arrow_visible')) {
+    // Показываем стрелку "Вперед", если доступна прокрутка вправо
+    if (scrollRight > 0) {
       rightArrow.classList.add('ribbon__arrow_visible');
+    } else {
+      rightArrow.classList.remove('ribbon__arrow_visible');
     }
   }
 }
