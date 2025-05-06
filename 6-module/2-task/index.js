@@ -11,38 +11,57 @@ export default class ProductCard {
     const card = document.createElement('div');
     card.classList.add('card');
 
+    // Верхний блок карточки (для изображения и цены)
+    const topSection = document.createElement('div');
+    topSection.classList.add('card__top');
+
     // Картинка продукта
     const img = document.createElement('img');
     img.classList.add('card__image');
     img.src = `/assets/images/products/${this.#product.image}`;
     img.alt = `${this.#product.name}`;
-    card.append(img);
+    topSection.appendChild(img);
+
+    // Блок с ценой
+    const priceBlock = document.createElement('span');
+    priceBlock.classList.add('card__price');
+    priceBlock.textContent = `€${this.#product.price.toFixed(2)}`;
+    topSection.appendChild(priceBlock);
+
+    // Нижний блок карточки (для названия и кнопки)
+    const bodySection = document.createElement('div');
+    bodySection.classList.add('card__body');
 
     // Название продукта
     const title = document.createElement('h3');
     title.classList.add('card__title');
     title.textContent = this.#product.name;
-    card.append(title);
-
-    // Цена продукта
-    const price = document.createElement('p');
-    price.classList.add('card__price');
-    price.textContent = `€${this.#product.price.toFixed(2)}`;
-    card.append(price);
+    bodySection.appendChild(title);
 
     // Кнопка добавления в корзину
-    const btn = document.createElement('button');
-    btn.classList.add('card__button');
-    btn.textContent = 'Add to Cart';
-    btn.addEventListener('click', () => {
-      const customEvent = new CustomEvent('product-add', {
+    const addButton = document.createElement('button');
+    addButton.classList.add('card__button');
+
+    // Создаем иконку и добавляем её в кнопку
+    const icon = document.createElement('img');
+    icon.src = '/assets/images/icons/plus-icon.svg';
+    icon.alt = 'icon';
+    addButton.appendChild(icon);
+
+    // Устанавливаем обработчик события клика
+    addButton.addEventListener('click', () => {
+      const event = new CustomEvent('product-add', {
         detail: this.#product.id,
         bubbles: true
       });
-      card.dispatchEvent(customEvent);
+      card.dispatchEvent(event);
     });
-    card.append(btn);
 
+    // Добавляем кнопку в тело карточки
+    bodySection.appendChild(addButton);
+
+    // Собираем всё вместе
+    card.append(topSection, bodySection);
     this.#elem = card;
   }
 

@@ -15,8 +15,8 @@ export default class Carousel {
     const template = `
       <div class="carousel">
         <div class="carousel__inner"></div>
-        <button class="carousel__arrow_left" style="display:none;"><</button>
-        <button class="carousel__arrow_right">></button>
+        <button class="carousel__arrow carousel__arrow_left"><img src="/assets/images/icons/angle-left-icon.svg" alt="icon"></button>
+        <button class="carousel__arrow carousel__arrow_right"><img src="/assets/images/icons/angle-icon.svg" alt="icon"></button>
       </div>
     `;
 
@@ -28,8 +28,14 @@ export default class Carousel {
     this.#slides.forEach((slideData, index) => {
       const slideTemplate = `
         <div class="carousel__slide" data-index="${index}">
-          <img class="carousel__img" src="../../assets/images/carousel/${slideData.image}" alt="${slideData.title}"/>
-          <button class="carousel__button" data-slide-id="${slideData.id}">Купить</button>
+          <img class="carousel__img" src="../../assets/images/carousel/${slideData.image}" alt="${slideData.name}"/>
+          <div class="carousel__caption">
+            <span class="carousel__price">€${slideData.price}</span>
+            <div class="carousel__title">${slideData.name}</div>
+            <button type="button" class="carousel__button">
+              <img src="/assets/images/icons/plus-icon.svg" alt="icon">
+            </button>
+          </div>
         </div>
       `;
 
