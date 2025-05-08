@@ -13,23 +13,53 @@ export default class Cart {
   }
 
   addProduct(product) {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    if (!product) return; // Безопасность: пропускаем операцию, если товар не передан
+
+    // Проверяем, есть ли уже аналогичный товар в корзине
+    const existingItem = this.cartItems.find(item => item.product.id === product.id);
+
+    if (existingItem) {
+      // Если товар уже есть, увеличиваем его количество
+      existingItem.count++;
+    } else {
+      // Если товара еще нет, добавляем его с количеством 1
+      this.cartItems.push({ product, count: 1 });
+    }
+
+    // Сообщаем иконке корзины о произошедшем изменении
+    this.onProductUpdate(existingItem || { product, count: 1 });
   }
 
   updateProductCount(productId, amount) {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    // Найти соответствующий товар в корзине
+    const cartItem = this.cartItems.find(item => item.product.id === productId);
+
+    if (!cartItem) return; // Выход, если товар не найден
+
+    // Обновляем количество товара
+    cartItem.count += amount;
+
+    // Удаляем товар из корзины, если его количество достигло нуля
+    if (cartItem.count <= 0) {
+      this.cartItems.splice(this.cartItems.indexOf(cartItem), 1);
+    }
+
+    // Информируем иконку корзины о произошедших изменениях
+    this.onProductUpdate(cartItem);
   }
 
   isEmpty() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    //Метод для проверки пустоты корзины
+    return this.cartItems.length === 0;
   }
 
   getTotalCount() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    //Метод для подсчета общего количества товаров в корзине
+    return this.cartItems.reduce((sum, item) => sum + item.count, 0);
   }
 
   getTotalPrice() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    return this.cartItems.reduce((sum, item) => sum + item.product.price * item.count, 0);
   }
 
   renderProduct(product, count) {
@@ -84,21 +114,142 @@ export default class Cart {
   }
 
   renderModal() {
-    // ...ваш код
+    // Создаем новое модальное окно
+    const modal = new Modal();
+    modal.setTitle('Your order');
+  
+    // Создаем верстку корзины
+    const modalBody = document.createElement('div');
+  
+    // Добавляем карточки товаров в модальное окно
+    this.cartItems.forEach(item => {
+      const productElement = this.renderProduct(item.product, item.count);
+      modalBody.append(productElement);
+    });
+  
+    // Добавляем форму заказа
+    const orderForm = this.renderOrderForm();
+    modalBody.append(orderForm);
+  
+    // Вставляем верстку в тело модального окна
+    modal.setBody(modalBody);
+  
+    // Добавляем обработчики событий для кнопок +/-
+    modalBody.addEventListener('click', (event) => {
+      if (event.target.closest('.cart-counter__button_plus')) {
+        const productId = event.target.closest('.cart-product').dataset.productId;
+        this.updateProductCount(productId, 1);
+      }
+  
+      if (event.target.closest('.cart-counter__button_minus')) {
+        const productId = event.target.closest('.cart-product').dataset.productId;
+        this.updateProductCount(productId, -1);
+      }
+    });
+  
+    // Добавляем обработчик события submit на форму
+    modalBody.querySelector('.cart-form').addEventListener('submit', (event) => {
+      event.preventDefault(); // Предотвращаем перезагрузку страницы
+      this.onSubmit(event);
+    });
+  
+    // Открываем модальное окно
+    modal.open();
   }
-
+  
   onProductUpdate(cartItem) {
-    // ...ваш код
+    this.cartIcon.update(this); // Обновляем иконку корзины
 
-    this.cartIcon.update(this);
-  }
+    if (document.body.classList.contains('is-modal-open')) { // Проверяем, открыто ли модальное окно
+        const productId = cartItem.product.id;
+        const modalBody = document.querySelector('.modal__body-inner'); // Получаем корневой элемент тела модального окна
 
-  onSubmit(event) {
-    // ...ваш код
-  };
+        // Обновляем количество товара в модальном окне
+        let productCount = modalBody.querySelector(`[data-product-id="${productId}"] .cart-counter__count`);
+        let productPrice = modalBody.querySelector(`[data-product-id="${productId}"] .cart-product__price`);
+        let infoPrice = modalBody.querySelector(`.cart-buttons__info-price`);
 
-  addEventListeners() {
-    this.cartIcon.elem.onclick = () => this.renderModal();
-  }
+        if (cartItem.count > 0) {
+            productCount.innerHTML = cartItem.count; // Обновляем количество товара
+
+            const totalPriceForProduct = (cartItem.product.price * cartItem.count).toFixed(2);
+            productPrice.innerHTML = `€${totalPriceForProduct}`; // Обновляем цену товара
+
+            const totalCartPrice = this.getTotalPrice().toFixed(2);
+            infoPrice.innerHTML = `€${totalCartPrice}`; // Обновляем общую стоимость корзины
+        } else {
+            // Если товара больше нет, удаляем элемент из модального окна
+            const productElement = modalBody.querySelector(`[data-product-id="${productId}"]`);
+            if (productElement) {
+                productElement.remove(); // Удаляем элемент из DOM
+            }
+
+            // Проверяем, остались ли другие товары в корзине
+            const remainingItemsCount = this.cartItems.reduce((count, item) => count + item.count, 0);
+
+            if (remainingItemsCount === 0) {
+                // Если товаров больше нет, закрываем модальное окно
+                const modal = document.querySelector('.modal');
+                if (modal) {
+                    document.body.classList.remove('is-modal-open');
+                    modal.remove(); // Закрываем модальное окно
+                }
+            } else {
+                // Если остались товары, просто обновляем интерфейс
+                infoPrice.innerHTML = `€${this.getTotalPrice().toFixed(2)}`; // Обновляем общую стоимость корзины
+            }
+        }
+    }
+}
+  
+  async onSubmit(event) {
+    const submitButton = event.target.querySelector('[type="submit"]');
+    
+    submitButton.classList.add('is-loading'); // Добавляем класс загрузки
+  
+    try {
+      const formData = new FormData(event.target); // Создаем FormData из формы
+  
+      const response = await fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (response.ok) { 
+        const result = await response.json(); 
+        
+        // Заменяем заголовок на 'Success!'
+        const modalTitle = document.querySelector('.modal__title');
+        modalTitle.innerHTML = 'Success!';
+  
+        // Очищаем корзину
+        this.cartItems.length = 0;
+  
+        // Заменяем содержимое тела модального окна на сообщение об успешном заказе
+        const successMessage = `
+          <div class="modal__body-inner">
+            <p>
+              Order successful! Your order is being cooked :) <br>
+              We’ll notify you about delivery time shortly.<br>
+              <img src="/assets/images/delivery.gif">
+            </p>
+          </div>`;
+        
+        document.querySelector('.modal__body-inner').innerHTML = successMessage;
+        
+      } else {
+        console.error('Ошибка при отправке данных:', response.statusText);
+      }
+      
+    } catch (error) {
+      console.error('Ошибка:', error);
+      
+    } finally {
+      submitButton.classList.remove('is-loading'); // Убираем класс загрузки после завершения запроса
+    }
 }
 
+addEventListeners() {
+  this.cartIcon.elem.onclick = () => this.renderModal();
+}
+}
